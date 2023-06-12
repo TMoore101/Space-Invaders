@@ -17,6 +17,9 @@ class Game {
 		//Tank variables
 		GameObject* tankObject = new GameObject();
 		SpriteObject* tankSprite = new SpriteObject();
+		//Bullet variables
+		std::vector<GameObject*>* bulletObjects = new std::vector<GameObject*>();
+		std::vector<SpriteObject*>* bulletSprites = new std::vector<SpriteObject*>();
 
 		//Enemy variables
 		std::vector<GameObject*>* enemyObjects = new std::vector<GameObject*>();
@@ -105,6 +108,64 @@ class Game {
 		else
 			movementSpeed = 400;
 
+		//Shoot
+		if (IsKeyPressed(KEY_SPACE)) {
+			//Create bullet object and sprite
+			GameObject* bulletObject = new GameObject();
+			SpriteObject* bulletSprite = new SpriteObject();
+
+			//Load Bullet
+			bulletSprite->Load("Images/Player/Bullet.png");
+			//Properly Align the bullet sprite
+			bulletSprite->SetScale(0.35, 0.35);
+			bulletSprite->SetPosition((-bulletSprite->textureWidth()) / 2 * bulletSprite->GetGlobalTransformation().m00, 0);
+
+			//Parent the bulletSprite to the bulletObject
+			bulletObject->AddChild(bulletSprite);
+
+			//Set the position of the bullet
+			bulletObject->SetPosition(tankObject->GetGlobalTransformation().m20, tankObject->GetGlobalTransformation().m21 - tankSprite->textureHeight() * bulletSprite->GetGlobalTransformation().m11);
+
+			//Add the bullet object to the bulletObjects list
+			bulletObjects->push_back(bulletObject);
+			bulletSprites->push_back(bulletSprite);
+		}
+
+		//Bullet function
+		for (int i = 0; i < bulletObjects->size(); i++) {
+			//Move bullet up
+			CustomVector3 facing = CustomVector3(
+				bulletObjects->at(i)->GetLocalTransformation().m00,
+				bulletObjects->at(i)->GetLocalTransformation().m01,
+				0
+			);
+			facing.y += deltaTime * bulletSpeed;
+			bulletObjects->at(i)->Translate(0, -facing.y);
+
+			//If the bullet hits the end of the screen, destroy the bullet
+			if (bulletObjects->at(i)->GetGlobalTransformation().m21 <= -bulletSprites->at(i)->textureHeight()) {
+				bulletObjects->erase(bulletObjects->begin() + i);
+				bulletSprites->erase(bulletSprites->begin() + i);
+			}
+
+			//Enemy collision function
+			for (int enemy = 0; enemy < enemyObjects->size(); enemy++) {
+				if (!bulletSprites->empty() && !enemySprites->empty()) {
+					//If the bullet collides with the enemy, destroy the bullet and enemy
+					if (CheckCollision(*bulletSprites->at(i), *enemySprites->at(enemy))) {
+						//Destroy bullet object
+						bulletObjects->erase(bulletObjects->begin() + i);
+						bulletSprites->erase(bulletSprites->begin() + i);
+
+						//Destroy enemy object
+						enemyObjects->erase(enemyObjects->begin() + enemy);
+						enemySprites->erase(enemySprites->begin() + enemy);
+					}
+
+				}
+			}
+		}
+
 		//Enemy movement
 		for (int i = 0; i < enemyObjects->size(); i++) {
 			//Get enemy at location i
@@ -160,6 +221,25 @@ class Game {
 				}
 			}
 		}
+	}
+
+	//Collision check function
+	bool CheckCollision(const SpriteObject& spriteA, const SpriteObject& spriteB) {
+		Rectangle rectA = {
+			spriteA.GetGlobalTransformation().m20,
+			spriteA.GetGlobalTransformation().m21,
+			spriteA.textureWidth() * spriteA.GetGlobalTransformation().m00,
+			spriteA.textureHeight() * spriteA.GetGlobalTransformation().m00
+		};
+
+		Rectangle rectB = {
+			spriteB.GetGlobalTransformation().m20,
+			spriteB.GetGlobalTransformation().m21,
+			spriteB.textureWidth() * spriteB.GetGlobalTransformation().m00,
+			spriteB.textureHeight() * spriteB.GetGlobalTransformation().m00
+		};
+
+		return CheckCollisionRecs(rectA, rectB);
 	}
 
 	//Draw game
