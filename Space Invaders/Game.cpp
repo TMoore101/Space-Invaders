@@ -250,7 +250,18 @@ class Game {
 		//Set background color
 		ClearBackground(BLACK);
 
+		//Draw bullets
+		for (GameObject* bullet : *bulletObjects) {
+			bullet->Draw();
+		}
 
+		//Draw enemies
+		for (GameObject* enemy : *enemyObjects) {
+			enemy->Draw();
+		}
+
+		//Draw tankObject
+		tankObject->Draw();
 
 		//End drawing canvas
 		EndDrawing();
