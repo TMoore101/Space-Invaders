@@ -19,4 +19,17 @@ class Game {
 
 	}
 
+	//Draw game
+	void Draw() {
+		//Start drawing canvas
+		BeginDrawing();
+
+		//Set background color
+		ClearBackground(BLACK);
+
+
+
+		//End drawing canvas
+		EndDrawing();
+	}
 };
